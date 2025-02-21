@@ -2,7 +2,7 @@ const chatBody = document.getElementById('chat-body');
 const userInput = document.getElementById('user-input');
 const sendButton = document.getElementById('send-button');
 
-const API_KEY = "AIzaSyA0hX7B057TPp1GNC4ITjndgIHrUJHwPuA"; // API Thay ở đây
+const API_KEY = "API_KEY"; // API Thay ở đây
 const MODEL = "gemini-1.5-flash";
 
 async function generateText(prompt) {
