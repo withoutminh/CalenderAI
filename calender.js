@@ -2,7 +2,7 @@ const chatBody = document.getElementById('chat-body');
 const userInput = document.getElementById('user-input');
 const sendButton = document.getElementById('send-button');
 
-const API_KEY = "API_KEY"; // API Thay ở đây
+const API_KEY = "thay_api_o_day"; // API Thay ở đây
 const MODEL = "gemini-1.5-flash";
 
 async function generateText(prompt) {
@@ -31,11 +31,11 @@ async function generateText(prompt) {
         if (!response.ok) {
             const errorData = await response.json();
             console.error("API lỗi:", errorData);
-            return `Xin lỗi, tôi gặp lỗi khi kết nối với API: ${response.status} - ${errorData.error.message}`;
+            return `Gặp lỗi khi kết nối với API: ${response.status} - ${errorData.error.message}`;
         }
 
         const data = await response.json();
-        console.log("API response data:", data);
+        console.log("API data:", data); // kinda useless tho!!!
 
         if (
             data &&
@@ -51,86 +51,61 @@ async function generateText(prompt) {
             if (aiResponse !== "") {
                 return aiResponse;
             } else {
-                return "Tôi không hiểu ý bạn. Bạn có thể diễn đạt lại không?";
+                return "Tôi không hiểu ý bạn. Bạn có thể nói lại không?";
             }
         } else {
             console.error("API Lỗi");
-            return "Xin lỗi, tôi gặp sự cố khi kết nối với API.";
+            return "Đã gặp sự cố khi kết nối với API.";
         }
     } catch (error) {
         console.error("Lỗi:", error.message);
-        return "Xin lỗi, tôi gặp lỗi khi xử lý yêu cầu của bạn.";
+        return "Đã gặp lỗi khi xử lý yêu cầu của bạn.";
     }
 }
 
 function addMessageToChat(message, sender) {
-    console.log("Calling addMessageToChat with:", message, sender);
     const messageElement = document.createElement('div');
     messageElement.classList.add('message');
     messageElement.classList.add(sender === 'ai' ? 'ai-message' : 'user-message');
     messageElement.innerHTML = `<p>${message}</p>`;
     chatBody.appendChild(messageElement);
-    chatBody.scrollTop = chatBody.scrollHeight; // Cuộn xuống cuối
+    chatBody.scrollTop = chatBody.scrollHeight; // Tự động cho chat chạy xuống dưới 
 }
 
-let currentAction = null; // Flag để theo dõi hành động hiện tại
+let currentAction = null; 
 let currentSubject = null;
 let currentGrade = null;
 let currentLessonOrTopicNumber = null;
-let currentActionText = null;
 
-// Hàm xử lý yêu cầu từ user
 async function handleUserInput() {
-  const userMessage = userInput.value;
-  addMessageToChat(userMessage, 'user');
-  userInput.value = '';
-
-  if (userMessage.toLowerCase() === "thoát") {
+    const userMessage = userInput.value;
+    addMessageToChat(userMessage, 'user');
+    userInput.value = ''; 
+  
+    if (userMessage.toLowerCase() === "thoát") {
       console.log("Thoát.");
-      return;
-  }
-
-  if (currentAction === null) {  // Xử lý input đầu tiên (chưa có action)
-      const subjectAndGrade = await extractSubjectAndGrade(userMessage);
-
-      if (!subjectAndGrade || !subjectAndGrade.subject) {
-          currentAction = null;
-          return;
-      }
-
-      currentSubject = subjectAndGrade.subject;
-      currentGrade = subjectAndGrade.grade;
-
+      return; //
+    }
+  
+    if (currentAction === null) {
       await analyzeUserInput(userMessage);
-  } else {  // Xử lý các input tiếp theo (đã có action)
-      // *** ĐÂY LÀ ĐIỂM CẦN CHÚ Ý: CHỈ GỌI HÀM XỬ LÝ KHI NGƯỜI DÙNG NHẤN ENTER ***
-      // *** VÀ ĐÃ CÓ currentAction ***
+    } else {
       switch (currentAction) {
-          case 'askingForGrade':
-              await handleGradeInput(userMessage);
-              break;
-          case 'askingForLessonNumber':
-              await handleLessonNumberInput(userMessage);
-              break;
-          case 'askingForTopicNumber':
-              await handleTopicNumberInput(userMessage);
-              break;
-          case 'askingForTime':
-              await handleTimeInput(userMessage);
-              break;
-          case 'askingForRelicName':
-              await handleRelicNameInput(userMessage);
-              break;
-          case 'askingForQuizSubject':
-              await handleQuizSubjectInput(userMessage);
-              break;
-          default:
-              console.warn("Unknown currentAction:", currentAction);
-              break;
+        case 'askingForGrade':
+          handleGradeInput(userMessage);
+          break;
+        case 'askingForLessonNumber':
+          handleLessonNumberInput(userMessage);
+          break;
+        case 'askingForTopicNumber':
+          handleTopicNumberInput(userMessage);
+          break;
+        case 'askingForTime':
+          handleTimeInput(userMessage);
+          break;
       }
+    }
   }
-}
-
 
 sendButton.addEventListener('click', handleUserInput);
 userInput.addEventListener('keydown', (event) => {
@@ -158,7 +133,7 @@ userInput.addEventListener('keydown', (event) => {
                 handleQuizSubjectInput(userMessage);
                 break;
             default:
-                handleUserInput(); // Xử lý input ban đầu
+                handleUserInput(); 
                 break;
         }
         userInput.value = "";
@@ -208,7 +183,7 @@ async function askForTimeAndSchedule(timePrompt, action, subject, lessonOrTopicN
         userInput.addEventListener('keydown', handleTempInput);
     });
 
-    let detail = ""; // Biến để lưu thông tin bài học/chủ đề (nếu có)
+    let detail = "";
     if (action === "Làm Quiz") {
         const lessonOrTopicNumber = await askQuestion(`Bạn muốn làm Quiz ${subject} bài/chủ đề số mấy?`);
         detail = ` bài/chủ đề ${lessonOrTopicNumber}`;
@@ -218,16 +193,12 @@ async function askForTimeAndSchedule(timePrompt, action, subject, lessonOrTopicN
     if (parsedDateTime) {
         const calendarUrl = createGoogleCalendarUrl(action, subject + detail, parsedDateTime);
         window.open(calendarUrl, '_blank');
-        displayAIMessage(`[LOG] Google Calendar đã được mở cho ${subject} ${detail}`);
+        displayAIMessage(`Google Calendar đã được mở cho ${subject} ${detail}`);
     } else {
-        displayErrorMessage("[LOG] Không hiểu định dạng ngày giờ. Hãy thử lại.");
+        displayErrorMessage("Không hiểu định dạng ngày giờ. Hãy thử lại.");
     }
 }
 
-
-
-// Sửa các hàm handleStudyRequest, handlePracticeRequest, handleFlashcardRequest, handleQuizRequest
-// để hiển thị thông báo lỗi lên giao diện HTML thay vì console.error
 async function handleStudyRequest(subject, grade, lessonOrTopicNumber = null) {
     if (subject === "Lịch Sử") {
       if (!lessonOrTopicNumber) {
@@ -236,7 +207,6 @@ async function handleStudyRequest(subject, grade, lessonOrTopicNumber = null) {
       } else {
         currentLessonOrTopicNumber = lessonOrTopicNumber;
         currentAction = 'askingForTime';
-        currentActionText = "Học"; // Gán giá trị cho currentActionText
         displayAIMessage(`Nhập thời gian cho việc học Lịch Sử bài ${lessonOrTopicNumber}`);
       }
     } else if (subject === "Giáo dục địa phương") {
@@ -246,120 +216,92 @@ async function handleStudyRequest(subject, grade, lessonOrTopicNumber = null) {
       } else {
         currentLessonOrTopicNumber = lessonOrTopicNumber;
         currentAction = 'askingForTime';
-        currentActionText = "Học"; // Gán giá trị cho currentActionText
-        displayAIMessage(
-          `Nhập thời gian cho việc học Giáo dục địa phương chủ đề ${lessonOrTopicNumber}`
-        );
+        displayAIMessage(`Nhập thời gian cho việc học Giáo dục địa phương chủ đề ${lessonOrTopicNumber}`);
       }
-    } else if (
-      subject === "Lịch sử" ||
-      subject === "Sử" ||
-      subject === "Giáo dục địa phương" ||
-      subject === "GDĐP"
-    ) {
-      currentAction = 'askingForTime';
-      currentActionText = "Học"; // Gán giá trị cho currentActionText
-      displayAIMessage(`Nhập thời gian cho việc học ${subject}`);
+    } else if (subject === "Lịch sử" || subject === "Sử" || subject === "Giáo dục địa phương" || subject === "GDĐP") {
+        currentAction = 'askingForTime';
+        displayAIMessage(`Nhập thời gian cho việc học ${subject}`);
     }
   }
 
   async function handlePracticeRequest(subject, grade, lessonOrTopicNumber = null) {
     if (subject === "Lịch Sử") {
-      if (!lessonOrTopicNumber) {
-        currentAction = 'askingForLessonNumber';
-        displayAIMessage("Bạn muốn luyện tập Lịch Sử bài số mấy? ");
-      } else {
-        currentLessonOrTopicNumber = lessonOrTopicNumber;
-        currentAction = 'askingForTime';
-        currentActionText = "Luyện tập"; // Gán giá trị cho currentActionText
-        displayAIMessage(
-          `Nhập thời gian cho việc luyện tập Lịch Sử bài ${lessonOrTopicNumber}`
-        );
-      }
+        if (!lessonOrTopicNumber) {
+            currentAction = 'askingForLessonNumber';
+            displayAIMessage("Bạn muốn luyện tập Lịch Sử bài số mấy? ");
+        } else {
+            currentLessonOrTopicNumber = lessonOrTopicNumber;
+            currentAction = 'askingForTime';
+            displayAIMessage(`Nhập thời gian cho việc luyện tập Lịch Sử bài ${lessonOrTopicNumber}`);
+        }
     } else if (subject === "Giáo dục địa phương") {
-      if (!lessonOrTopicNumber) {
-        currentAction = 'askingForTopicNumber';
-        displayAIMessage("Bạn muốn luyện tập Giáo dục địa phương chủ đề mấy? ");
-      } else {
-        currentLessonOrTopicNumber = lessonOrTopicNumber;
+        if (!lessonOrTopicNumber) {
+            currentAction = 'askingForTopicNumber';
+            displayAIMessage("Bạn muốn luyện tập Giáo dục địa phương chủ đề mấy? ");
+        } else {
+            currentLessonOrTopicNumber = lessonOrTopicNumber;
+            currentAction = 'askingForTime';
+            displayAIMessage(`Nhập thời gian cho việc luyện tập Giáo dục địa phương chủ đề ${lessonOrTopicNumber}`);
+        }
+    } else if (subject === "Lịch sử" || subject === "Giáo dục địa phương" || subject === "Sử" || subject === "GDĐP") {
         currentAction = 'askingForTime';
-        currentActionText = "Luyện tập"; // Gán giá trị cho currentActionText
-        displayAIMessage(
-          `Nhập thời gian cho việc luyện tập Giáo dục địa phương chủ đề ${lessonOrTopicNumber}`
-        );
-      }
-    } else if (
-      subject === "Lịch sử" ||
-      subject === "Giáo dục địa phương" ||
-      subject === "Sử" ||
-      subject === "GDĐP"
-    ) {
-      currentAction = 'askingForTime';
-      currentActionText = "Luyện tập"; // Gán giá trị cho currentActionText
-      displayAIMessage(`Nhập thời gian cho việc luyện tập ${subject}`);
+        displayAIMessage(`Nhập thời gian cho việc luyện tập ${subject}`);
     } else {
-      displayErrorMessage("[Lỗi] Không nhận diện được môn học.");
-      currentAction = null;
+        displayErrorMessage("Không hiểu môn học.");
+        currentAction = null;
     }
-  }
+}
 
-  async function handleFlashcardRequest(relicName) {
+async function handleFlashcardRequest(relicName) {
     if (!relicName) {
-      displayErrorMessage("[Lỗi] Không nhận được tên di tích.");
-      currentAction = null;
-      return;
+        displayErrorMessage("Không hiểu được tên di tích.");
+        currentAction = null;
+        return;
     }
-    currentSubject = `Flashcard di tích ${relicName}`;
     const timePrompt = `Nhập thời gian cho việc xem Flashcard di tích ${relicName}`;
-    currentAction = "askingForTime";
-    currentActionText = "Xem Flashcard"; // Gán giá trị cho currentActionText
-    displayAIMessage(timePrompt);
-  }
-  
+    await askForTimeAndSchedule(
+        timePrompt,
+        "Xem Flashcard",
+        `di tích ${relicName}`
+    );
+    currentAction = null;
+}
 
-  async function handleQuizRequest(quizSubjectInput) {
+async function handleQuizRequest(quizSubjectInput) {
     const { subject, grade } = await extractSubjectAndGrade(quizSubjectInput);
-  
+
     if (!subject) {
-      displayErrorMessage("Không tìm thấy môn học cho Quiz. Hãy thử lại.");
-      currentAction = null;
-      return;
+        displayErrorMessage("Không tìm thấy môn học cho Quiz. Hãy thử lại.");
+        currentAction = null;
+        return;
     }
-  
+
     if (!grade) {
-      displayErrorMessage("Vui lòng nhập lớp học (10, 11, hoặc 12).");
-      currentAction = null;
-      return;
+        displayErrorMessage("Vui lòng nhập lớp học (10, 11, hoặc 12).");
+        currentAction = null;
+        return;
     }
-  
+
     if (grade < 10) {
-      displayErrorMessage(
-        `Hiện tại chưa có tài liệu cho lớp ${grade}. Vui lòng chọn lớp 10, 11 hoặc 12.`
-      );
-      currentAction = null;
-      return;
+        displayErrorMessage(`Hiện tại chưa có tài liệu cho lớp ${grade}. Vui lòng chọn lớp 10, 11 hoặc 12.`);
+        currentAction = null;
+        return;
     }
-  
+
     currentSubject = subject;
     currentGrade = grade;
-  
+
     if (subject === "Lịch Sử") {
-      currentAction = 'askingForTime';
-      currentActionText = "Làm Quiz"; // Gán giá trị cho currentActionText
-      displayAIMessage(
-        `Nhập thời gian cho việc làm Quiz Lịch Sử lớp ${grade} (Nhập số bài)`
-      );
+        currentAction = 'askingForTime';
+        displayAIMessage(`Nhập thời gian cho việc làm Quiz Lịch Sử lớp ${grade} (Nhập số bài)`);
     } else if (subject === "Giáo dục địa phương") {
-      currentAction = 'askingForTime';
-      currentActionText = "Làm Quiz"; // Gán giá trị cho currentActionText
-      displayAIMessage(
-        `Nhập thời gian cho việc làm Quiz Giáo dục địa phương lớp ${grade} (Nhập số chủ đề)`
-      );
+        currentAction = 'askingForTime';
+        displayAIMessage(`Nhập thời gian cho việc làm Quiz Giáo dục địa phương lớp ${grade} (Nhập số chủ đề)`);
     } else {
-      displayErrorMessage("Môn học này không hỗ trợ làm Quiz. Hãy thử lại.");
-      currentAction = null;
+        displayErrorMessage("Môn học này không hỗ trợ làm Quiz. Hãy thử lại.");
+        currentAction = null;
     }
-  }
+}
 
 async function handleGradeInput(userInput) {
     addMessageToChat(userInput, 'user');
@@ -439,43 +381,46 @@ async function handleGradeInput(userInput) {
   }
   
   async function handleTimeInput(userInput) {
-    // Xóa dòng này: addMessageToChat(userInput, "user");
+    addMessageToChat(userInput, 'user'); 
     const parsedDateTime = parseDateTime(userInput);
     if (parsedDateTime) {
-      let detail = "";
-      if (
-        currentAction === "askingForTime" &&
-        (currentSubject === "Lịch Sử" ||
-          currentSubject === "Giáo dục địa phương")
-      ) {
-        if (currentAction === "askingForTime" && currentSubject === "Lịch Sử") {
-          detail = ` bài ${currentLessonOrTopicNumber}`;
-        } else if (
-          currentAction === "askingForTime" &&
-          currentSubject === "Giáo dục địa phương"
-        ) {
-          detail = ` chủ đề ${currentLessonOrTopicNumber}`;
+        let detail = "";
+        if (currentAction === 'askingForTime' && (currentSubject === "Lịch Sử" || currentSubject === "Giáo dục địa phương")) {
+            if (currentAction === 'askingForTime' && currentSubject === "Lịch Sử") {
+                detail = ` bài ${currentLessonOrTopicNumber}`;
+            } else if (currentAction === 'askingForTime' && currentSubject === "Giáo dục địa phương") {
+                detail = ` chủ đề ${currentLessonOrTopicNumber}`;
+            }
         }
-      }
-  
-      // Sử dụng currentActionText thay vì xác định actionText trong này
-      const calendarUrl = createGoogleCalendarUrl(
-        currentActionText,
-        `${currentSubject}`,
-        parsedDateTime
-      );
-  
-      window.open(calendarUrl, "_blank");
-      displayAIMessage(`Đã mở Google Calender, hãy bấm "Lưu" vào lịch nhé`);
-      currentActionText = null; // Reset currentActionText
-      currentAction = null; // Reset action sau khi hoàn thành
-      currentSubject = null;
-      currentGrade = null;
-      currentLessonOrTopicNumber = null;
+        
+        let actionText = "";
+        if (currentAction.includes('học')) {
+            actionText = "Học";
+        } else if (currentAction.includes('luyện tập')) {
+            actionText = "Luyện tập";
+        } else if (currentAction.includes('quiz')) {
+            actionText = "Làm Quiz";
+        } else if (currentAction.includes('flashcard')) {
+            actionText = "Xem Flashcard";
+        }
+        
+        const calendarUrl = createGoogleCalendarUrl(
+            actionText,
+            `${currentSubject}${detail}`,
+            parsedDateTime
+        );
+
+        window.open(calendarUrl, '_blank');
+        displayAIMessage(`Đã mở Google Calender, hãy bấm "Lưu" vào lịch nhé`);
+        currentAction = null; //
+        currentSubject = null;
+        currentGrade = null;
+        currentLessonOrTopicNumber = null;
+
     } else {
-      displayErrorMessage("[LOG] Không hiểu định dạng ngày giờ. Hãy thử lại.");
+        displayErrorMessage("Không hiểu định dạng ngày giờ. Hãy thử lại.");
     }
-  }
+}
 
 async function analyzeUserInput(userInput) {
     const lowerCaseInput = userInput.toLowerCase();
@@ -492,7 +437,6 @@ async function analyzeUserInput(userInput) {
       if (!grade) {
         currentAction = 'askingForGrade';
         displayAIMessage("Vui lòng nhập lớp học:");
-        // Không cần await ở đây vì listener 'keydown' sẽ xử lý
       } else {
         currentGrade = grade;
         await handleStudyRequest(currentSubject, currentGrade);
@@ -527,9 +471,6 @@ async function analyzeUserInput(userInput) {
       }
   }
   
-  
-
-// Hàm trích xuất môn học và lớp từ phản hồi của user
 async function extractSubjectAndGrade(userResponse, action) {
     const subjects = ["Lịch Sử", "Giáo dục địa phương", "Sử", "GDĐP"];
     const lowerCaseResponse = userResponse.toLowerCase();
@@ -555,7 +496,7 @@ async function extractSubjectAndGrade(userResponse, action) {
         return { subject, grade: null };
     }
 }
-// Hàm xử lý yêu cầu làm Quiz
+
 async function handleQuizRequest(quizSubjectInput) {
   console.log("Current userInput in handleQuizRequest:", userInput.value);
   const { subject, grade } = await extractSubjectAndGrade(quizSubjectInput);
@@ -608,7 +549,7 @@ function extractQuizSubject(userResponse) {
 
   return null;
 }
-// Phân tích thời gian của user nhập vào
+
 function parseDateTime(dateTimeString) {
   const now = new Date();
   let year = now.getFullYear();
@@ -756,7 +697,7 @@ function parseDateTime(dateTimeString) {
 
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
     displayErrorMessage(
-      "Không thể phân tích thời gian. Hãy sử dụng định dạng HH:MM AM/PM, HH:MM 24h, hoặc các cụm từ như 'ngày mai', 'tuần sau'."
+      "Hãy sử dụng định dạng HH:MM AM/PM, HH:MM 24h, hoặc các cụm từ như 'ngày mai', 'tuần sau'."
     );
     return null;
   }
@@ -781,19 +722,18 @@ function createGoogleCalendarUrl(action, subject, { startDate, endDate }) {
   const formattedEndDate = formatDateForUrl(endDate);
 
   let text = "";
-
   if (action === "Học") {
-      text = `Học ${subject}`; // Include subject here
+      text = "Học " + subject;
   } else if (action === "Làm Quiz") {
-      text = `Làm Quiz ${subject}`; // Include subject here
+      text = "Làm Quiz " + subject;
   } else if (action === "Luyện tập") {
-      text = `Luyện tập ${subject}`; // Include subject here
-  } else if (action === "Xem Flashcard") {
-      text = `Xem ${subject}`; // Include subject here
+      text = "Luyện tập " + subject;
+  } else {
+      text = "Xem " + subject;
   }
 
   const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-      text // Now text contains both action and subject
+      text
   )}&dates=${formattedStartDate}/${formattedEndDate}`;
   return url;
 }
