@@ -199,7 +199,9 @@ async function askForTimeAndSchedule(timePrompt, action, subject, lessonOrTopicN
     }
 }
 
-async function handleStudyRequest(subject, grade, lessonOrTopicNumber = null) {
+  async function handleStudyRequest(subject, grade, lessonOrTopicNumber = null) {
+    currentSubject = subject;
+    currentGrade = grade;
     if (subject === "Lịch Sử") {
       if (!lessonOrTopicNumber) {
         currentAction = 'askingForLessonNumber';
@@ -225,6 +227,8 @@ async function handleStudyRequest(subject, grade, lessonOrTopicNumber = null) {
   }
 
   async function handlePracticeRequest(subject, grade, lessonOrTopicNumber = null) {
+    currentSubject = subject;
+    currentGrade = grade;
     if (subject === "Lịch Sử") {
         if (!lessonOrTopicNumber) {
             currentAction = 'askingForLessonNumber';
@@ -250,7 +254,7 @@ async function handleStudyRequest(subject, grade, lessonOrTopicNumber = null) {
         displayErrorMessage("Không hiểu môn học.");
         currentAction = null;
     }
-}
+  }
 
 async function handleFlashcardRequest(relicName) {
     if (!relicName) {
@@ -267,7 +271,7 @@ async function handleFlashcardRequest(relicName) {
     currentAction = null;
 }
 
-async function handleQuizRequest(quizSubjectInput) {
+  async function handleQuizRequest(quizSubjectInput) {
     const { subject, grade } = await extractSubjectAndGrade(quizSubjectInput);
 
     if (!subject) {
@@ -287,21 +291,18 @@ async function handleQuizRequest(quizSubjectInput) {
         currentAction = null;
         return;
     }
-
     currentSubject = subject;
     currentGrade = grade;
-
+    currentAction = 'askingForTime';
     if (subject === "Lịch Sử") {
-        currentAction = 'askingForTime';
         displayAIMessage(`Nhập thời gian cho việc làm Quiz Lịch Sử lớp ${grade} (Nhập số bài)`);
     } else if (subject === "Giáo dục địa phương") {
-        currentAction = 'askingForTime';
         displayAIMessage(`Nhập thời gian cho việc làm Quiz Giáo dục địa phương lớp ${grade} (Nhập số chủ đề)`);
     } else {
         displayErrorMessage("Môn học này không hỗ trợ làm Quiz. Hãy thử lại.");
         currentAction = null;
     }
-}
+  }
 
 async function handleGradeInput(userInput) {
     addMessageToChat(userInput, 'user');
@@ -381,38 +382,62 @@ async function handleGradeInput(userInput) {
   }
   
   async function handleTimeInput(userInput) {
-    addMessageToChat(userInput, 'user'); 
+    addMessageToChat(userInput, 'user');
     const parsedDateTime = parseDateTime(userInput);
     if (parsedDateTime) {
         let detail = "";
-        if (currentAction === 'askingForTime' && (currentSubject === "Lịch Sử" || currentSubject === "Giáo dục địa phương")) {
-            if (currentAction === 'askingForTime' && currentSubject === "Lịch Sử") {
-                detail = ` bài ${currentLessonOrTopicNumber}`;
-            } else if (currentAction === 'askingForTime' && currentSubject === "Giáo dục địa phương") {
-                detail = ` chủ đề ${currentLessonOrTopicNumber}`;
-            }
-        }
-        
         let actionText = "";
-        if (currentAction.includes('học')) {
-            actionText = "Học";
-        } else if (currentAction.includes('luyện tập')) {
-            actionText = "Luyện tập";
-        } else if (currentAction.includes('quiz')) {
+
+        // Xác định hành động dựa trên currentAction
+        if (currentAction === 'askingForTime' && (currentSubject === "Lịch Sử" || currentSubject === "Giáo dục địa phương")) {
+            if (currentAction === 'askingForTime' && (currentSubject === "Lịch Sử" || currentSubject === "Sử")) {
+                actionText = "Học";
+                detail = ` bài ${currentLessonOrTopicNumber}`;
+            } else if (currentAction === 'askingForTime' && (currentSubject === "Giáo dục địa phương" || currentSubject === "GDĐP")) {
+                actionText = "Học";
+                detail = ` chủ đề ${currentLessonOrTopicNumber}`;
+            } else if (currentAction.includes('quiz')) {
+                actionText = "Làm Quiz";
+            } else if (currentAction.includes('luyện tập')) {
+                actionText = "Luyện tập";
+            }
+
+        } else if (currentAction === 'askingForTime' && (currentSubject === "Lịch Sử" || currentSubject === "Sử") && userInput.toLowerCase().includes("quiz")) {
             actionText = "Làm Quiz";
-        } else if (currentAction.includes('flashcard')) {
-            actionText = "Xem Flashcard";
+            detail = ` bài ${currentLessonOrTopicNumber}`;
+        } else if (currentAction === 'askingForTime' && (currentSubject === "Giáo dục địa phương" || currentSubject === "GDĐP") && userInput.toLowerCase().includes("quiz")) {
+            actionText = "Làm Quiz";
+            detail = ` chủ đề ${currentLessonOrTopicNumber}`;
         }
-        
+          else if (currentAction.includes("relicName")) {
+            actionText = "Xem Flashcard";
+          }
+          else if (userInput.toLowerCase().includes("luyện tập")) {
+                actionText = "Luyện tập";
+                if (currentAction.includes('askingForTime') && (currentSubject === "Lịch Sử" || currentSubject === "Sử")) {
+                    detail = ` bài ${currentLessonOrTopicNumber}`;
+                } else if (currentAction.includes('askingForTime') && (currentSubject === "Giáo dục địa phương" || currentSubject === "GDĐP")) {
+                    detail = ` chủ đề ${currentLessonOrTopicNumber}`;
+                }
+          }
+           else if (userInput.toLowerCase().includes("quiz")) {
+                actionText = "Làm Quiz";
+                if (currentAction.includes('askingForTime') && (currentSubject === "Lịch Sử" || currentSubject === "Sử")) {
+                    detail = ` bài ${currentLessonOrTopicNumber}`;
+                } else if (currentAction.includes('askingForTime') && (currentSubject === "Giáo dục địa phương" || currentSubject === "GDĐP")) {
+                    detail = ` chủ đề ${currentLessonOrTopicNumber}`;
+                }
+            }
+        // Tạo URL Google Calendar
         const calendarUrl = createGoogleCalendarUrl(
             actionText,
-            `${currentSubject}${detail}`,
+            `${currentSubject}${detail} lớp ${currentGrade}`, // Thêm lớp vào
             parsedDateTime
         );
 
         window.open(calendarUrl, '_blank');
         displayAIMessage(`Đã mở Google Calender, hãy bấm "Lưu" vào lịch nhé`);
-        currentAction = null; //
+        currentAction = null;
         currentSubject = null;
         currentGrade = null;
         currentLessonOrTopicNumber = null;
@@ -420,7 +445,7 @@ async function handleGradeInput(userInput) {
     } else {
         displayErrorMessage("Không hiểu định dạng ngày giờ. Hãy thử lại.");
     }
-}
+  }
 
 async function analyzeUserInput(userInput) {
     const lowerCaseInput = userInput.toLowerCase();
@@ -728,8 +753,10 @@ function createGoogleCalendarUrl(action, subject, { startDate, endDate }) {
       text = "Làm Quiz " + subject;
   } else if (action === "Luyện tập") {
       text = "Luyện tập " + subject;
+  } else if (action === "Xem Flashcard") {
+      text = "Xem Flashcard " + subject;
   } else {
-      text = "Xem " + subject;
+      text = subject;
   }
 
   const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
@@ -755,5 +782,4 @@ async function initialGreeting() {
 
 // lời chào của AI
 initialGreeting();
-
 
